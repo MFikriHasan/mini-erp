@@ -14,9 +14,18 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('email')
+                ->unique();
+            $table->timestamp('email_verified_at')
+                ->nullable();
             $table->string('password');
+            $table->enum('role', ['staff', 'admin', 'purchasing', 'warehouse', 'manager'])
+                ->default('staff')
+                ->index();
+            $table->foreignId('department_id')
+                ->nullable()
+                ->constrained('departments')
+                ->nullOnDelete();
             $table->rememberToken();
             $table->timestamps();
         });
