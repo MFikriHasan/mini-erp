@@ -3,42 +3,60 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use LogicException;
 
 class Material extends Model
 {
-    protected $fillable = ['code', 'name', 'base_uom', 'qty_decimals', 'min_stock', 'is_active'];
+    protected $fillable = [
+        'code',
+        'name',
+        'base_uom',
+        'qty_decimals',
+        'min_stock',
+        'is_active',
+    ];
 
-    public function requisitionitems(): HasMany
+    protected function casts(): array
     {
-        return $this->hasMany(PurchaseRequisitionItem::class);
+        return [
+            'min_stock' => 'decimal:3',
+            'qty_decimals' => 'integer',
+            'is_active' => 'boolean',
+        ];
     }
 
-    public function orderItems(): HasMany
+    
+    public function hasTransactions(): bool
     {
-        return $this->hasMany(PurchaseOrderItem::class);
+        foreach ([
+            'purchase_requisition_items',
+            'purchase_order_items',
+            'goods_receipt_items',
+            'stock_movements',
+        ] as $table) {
+            if (DB::table($table)->where('material_id', $this->getKey())->exists()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public function receiptItems(): HasMany
+    protected static function booted(): void
     {
-        return $this->hasMany(GoodsReceiptItem::class);
-    }
+        
+        static::saving(function (Material $material) {
+            if ($material->qty_decimals < 0 || $material->qty_decimals > 3) {
+                throw new LogicException('qty_decimals harus antara 0 dan 3.');
+            }
 
-    public function stockMovements(): HasMany
-    {
-        return $this->hasMany(StockMovement::class);
-    }
-
-    public function stockBalances(): HasMany
-    {
-        return $this->hasMany(StockBalance::class);
-    }
-
-    public function storageLocations(): BelongsToMany
-    {
-        return $this->belongsToMany(StorageLocation::class, 'stock_balances')
-                ->withPivot('quantity')
-                ->withTimestamps();
+            if ($material->exists
+                && $material->isDirty('qty_decimals')
+                && $material->qty_decimals < $material->getOriginal('qty_decimals')
+                && $material->hasTransactions()) {
+                throw new LogicException('Jumlah desimal tidak boleh diturunkan setelah material dipakai transaksi.');
+            }
+        });
     }
 }

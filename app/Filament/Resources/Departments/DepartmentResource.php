@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\Departments;
 
+
 use App\Filament\Resources\Departments\Pages\ManageDepartments;
 use App\Models\Department;
 use BackedEnum;
-use Filament\Actions\BulkActionGroup;
+// use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+// use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 
 class DepartmentResource extends Resource
 {
+    
+
     protected static ?string $model = Department::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -29,8 +32,12 @@ class DepartmentResource extends Resource
         return $schema
             ->components([
                 TextInput::make('code')
+                    ->label('Kode Department')
+                    ->maxLength(20)
+                    ->unique(ignoreRecord:true)
                     ->required(),
                 TextInput::make('name')
+                    ->label('Nama Department')
                     ->required(),
             ]);
     }
@@ -61,9 +68,9 @@ class DepartmentResource extends Resource
                 DeleteAction::make(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                // BulkActionGroup::make([
+                //     DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
