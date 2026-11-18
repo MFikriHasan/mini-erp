@@ -9,11 +9,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
+    protected $fillable = [
+        'number',
+        'purchase_requisition_id',
+        'vendor_id',
+        'status',
+        'order_date',
+        'created_by',
+        'notes',
+    ];
+
     protected function casts(): array
     {
         return [
-        'status' => PurchaseOrderStatus::class,
-        'order_date' => 'date',
+            'status' => PurchaseOrderStatus::class,
+            'order_date' => 'date',
         ];
     }
 

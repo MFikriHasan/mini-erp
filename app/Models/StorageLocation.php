@@ -14,7 +14,7 @@ class StorageLocation extends Model
     {
         return $this->hasMany(GoodsReceipt::class);
     }
- 
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
@@ -24,11 +24,12 @@ class StorageLocation extends Model
     {
         return $this->hasMany(StockBalance::class);
     }
-    
+
+    // Many to Many via stock_balances (pivot membawa quantity)
     public function materials(): BelongsToMany
     {
         return $this->belongsToMany(Material::class, 'stock_balances')
-        ->withPivot('quantity')
-        ->withTimestamps();
+            ->withPivot('quantity')
+            ->withTimestamps();
     }
 }

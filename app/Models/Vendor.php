@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Vendor extends Model
 {
     protected $fillable = ['code', 'name', 'address', 'phone', 'email', 'is_active'];
-    
+
+    protected function casts(): array
+    {
+        return ['is_active' => 'boolean'];
+    }
+
     public function purchaseOrders(): HasMany
     {
         return $this->hasMany(PurchaseOrder::class);

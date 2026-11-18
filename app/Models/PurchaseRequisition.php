@@ -10,15 +10,27 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PurchaseRequisition extends Model
 {
+    protected $fillable = [
+        'number',
+        'department_id',
+        'requested_by',
+        'status',
+        'needed_date',
+        'notes',
+        'approved_by',
+        'approved_at',
+        'rejection_reason',
+    ];
+
     protected function casts(): array
     {
         return [
-         'status' => RequisitionStatus::class,
-        'needed_date' => 'date',
-        'approved_at' => 'datetime',
+            'status' => RequisitionStatus::class,
+            'needed_date' => 'date',
+            'approved_at' => 'datetime',
         ];
     }
-    
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
@@ -39,6 +51,7 @@ class PurchaseRequisition extends Model
         return $this->hasMany(PurchaseRequisitionItem::class);
     }
 
+    // One to One (0..1): satu PR menjadi paling banyak satu PO
     public function purchaseOrder(): HasOne
     {
         return $this->hasOne(PurchaseOrder::class);

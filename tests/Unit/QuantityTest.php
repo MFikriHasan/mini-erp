@@ -57,3 +57,22 @@ it('memformat tampilan sesuai desimal material', function () {
         ->and(Quantity::format('12', 0))->toBe('12')
         ->and(Quantity::format('1234.5', 2))->toBe('1.234,50');
 });
+
+// ---- Regresi: nilai float dari SQLite dan nilai null dari model baru ----
+it('tidak memotong float ke int', function () {
+    // SQLite mengembalikan decimal sebagai float; PHP bisa memotong 12.5 menjadi 12 bila tidak dinormalisasi
+    expect(Quantity::compare(12.5, '12.500'))->toBe(0)
+        ->and(Quantity::sub(12.5, 4.125))->toBe('8.375')
+        ->and(Quantity::add(0.25, 0.5))->toBe('0.750');
+});
+
+it('memperlakukan null dan string kosong sebagai nol', function () {
+    expect(Quantity::sub('12.500', null))->toBe('12.500')
+        ->and(Quantity::add(null, '1.5'))->toBe('1.500')
+        ->and(Quantity::compare('', '0.000'))->toBe(0);
+});
+
+it('memformat nilai float dan null', function () {
+    expect(Quantity::format(12.5, 3))->toBe('12,500')
+        ->and(Quantity::format(null, 2))->toBe('0,00');
+});

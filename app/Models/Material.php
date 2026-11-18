@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 
@@ -26,7 +28,44 @@ class Material extends Model
         ];
     }
 
-    
+    public function requisitionItems(): HasMany
+    {
+        return $this->hasMany(PurchaseRequisitionItem::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function receiptItems(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptItem::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    public function stockBalances(): HasMany
+    {
+        return $this->hasMany(StockBalance::class);
+    }
+
+    // Many to Many via stock_balances (pivot membawa quantity)
+    public function storageLocations(): BelongsToMany
+    {
+        return $this->belongsToMany(StorageLocation::class, 'stock_balances')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    /**
+     * Apakah material ini sudah dipakai dokumen atau ledger.
+     * Memakai query langsung agar tidak bergantung pada model dokumen yang belum dibuat.
+     * (Boleh diganti dengan versi berbasis relasi setelah model-model itu ada.)
+     */
     public function hasTransactions(): bool
     {
         foreach ([
@@ -45,7 +84,7 @@ class Material extends Model
 
     protected static function booted(): void
     {
-        
+        // Lapis pengaman terakhir (form sudah memvalidasi lebih dulu dengan pesan yang ramah)
         static::saving(function (Material $material) {
             if ($material->qty_decimals < 0 || $material->qty_decimals > 3) {
                 throw new LogicException('qty_decimals harus antara 0 dan 3.');
