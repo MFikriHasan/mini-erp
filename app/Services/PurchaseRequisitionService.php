@@ -122,6 +122,15 @@ class PurchaseRequisitionService
         );
     }
 
+    /**
+     * Menandai PR sebagai sudah menjadi PO. Dipanggil PurchaseOrderService di dalam
+     * transaksinya, sehingga bila pembuatan PO gagal, status PR ikut dikembalikan.
+     */
+    public function markConverted(PurchaseRequisition $requisition, User $actor): PurchaseRequisition
+    {
+        return $this->transition($requisition, $actor, 'convert', RequisitionStatus::Converted);
+    }
+
     public function reopen(PurchaseRequisition $requisition, User $actor): PurchaseRequisition
     {
         return $this->transition($requisition, $actor, 'reopen', RequisitionStatus::Draft, [

@@ -23,6 +23,7 @@ class PurchaseRequisitionForm
         return $schema
             ->components([
                 Section::make('Informasi PR')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->schema([
                         TextInput::make('number')
@@ -56,7 +57,8 @@ class PurchaseRequisitionForm
 
                         DatePicker::make('needed_date')
                             ->label('Tanggal dibutuhkan')
-                            ->native(false),
+                            ->native(false)
+                            ->displayFormat('d M Y'),
 
                         Textarea::make('notes')
                             ->label('Catatan')
@@ -74,6 +76,7 @@ class PurchaseRequisitionForm
                     ]),
 
                 Section::make('Item material')
+                    ->columnSpanFull()
                     ->schema([
                         Repeater::make('items')
                             ->hiddenLabel()
