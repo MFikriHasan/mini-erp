@@ -57,7 +57,7 @@ Centang menandakan sudah selesai dan diuji. Daftar ini diperbarui seiring pengem
 - [x] Purchase Requisition (PR) dengan status `draft → submitted → approved/rejected → converted`
 - [x] Persetujuan PR oleh Manager (penolakan wajib menyertakan alasan)
 - [ ] Purchase Order (PO) dari PR yang disetujui
-- [ ] Penomoran dokumen otomatis per tahun (contoh: `PR-2026-0001`)
+- [x] Penomoran dokumen otomatis per tahun (contoh: `PR-2026-0001`)
 
 **Gudang**
 - [ ] Goods Receipt (GR), termasuk penerimaan parsial
@@ -67,7 +67,7 @@ Centang menandakan sudah selesai dan diuji. Daftar ini diperbarui seiring pengem
 **Laporan & Kontrol**
 - [ ] Kartu stok per material dan lokasi
 - [ ] Peringatan stok di bawah minimum
-- [ ] Hak akses per peran: Admin, Purchasing, Warehouse, Manager
+- [x] Hak akses per peran: Admin, Purchasing, Warehouse, Manager
 - [ ] Log aktivitas (opsional)
 - [ ] Goods Issue ke departemen (opsional)
 - [ ] Ekspor Excel/PDF (opsional)
