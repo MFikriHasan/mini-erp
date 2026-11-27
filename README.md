@@ -51,7 +51,7 @@ flowchart LR
 Centang menandakan sudah selesai dan diuji. Daftar ini diperbarui seiring pengembangan.
 
 **Master Data**
-- [ ] Material, Vendor, Storage Location, Department
+- `[DONE]` Material, Vendor, Storage Location, Department
 
 **Pengadaan**
 - [ ] Purchase Requisition (PR) dengan status `draft → submitted → approved/rejected → converted`
