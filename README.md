@@ -51,11 +51,11 @@ flowchart LR
 Centang menandakan sudah selesai dan diuji. Daftar ini diperbarui seiring pengembangan.
 
 **Master Data**
-- `[DONE]` Material, Vendor, Storage Location, Department
+- [x] Material, Vendor, Storage Location, Department
 
 **Pengadaan**
-- [ ] Purchase Requisition (PR) dengan status `draft → submitted → approved/rejected → converted`
-- [ ] Persetujuan PR oleh Manager (penolakan wajib menyertakan alasan)
+- [x] Purchase Requisition (PR) dengan status `draft → submitted → approved/rejected → converted`
+- [x] Persetujuan PR oleh Manager (penolakan wajib menyertakan alasan)
 - [ ] Purchase Order (PO) dari PR yang disetujui
 - [ ] Penomoran dokumen otomatis per tahun (contoh: `PR-2026-0001`)
 
