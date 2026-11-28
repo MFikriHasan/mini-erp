@@ -72,6 +72,14 @@ final class Quantity
         return number_format((float) self::normalize($value), $decimals, ',', '.');
     }
 
+    /** Untuk tampilan: 12.500 menjadi "12.5" dan 10.000 menjadi "10" (tanpa angka nol di belakang). */
+    public static function plain(string|int|float|null $value): string
+    {
+        $value = self::normalize($value);
+
+        return str_contains($value, '.') ? rtrim(rtrim($value, '0'), '.') : $value;
+    }
+
     /**
      * Mengubah nilai apa pun menjadi string desimal yang aman untuk bcmath.
      *

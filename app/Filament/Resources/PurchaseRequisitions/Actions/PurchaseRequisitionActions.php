@@ -2,21 +2,30 @@
 
 namespace App\Filament\Resources\PurchaseRequisitions\Actions;
 
+use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
+use App\Filament\Support\ServiceActionRunner;
+use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequisition;
 use App\Models\User;
+use App\Models\Vendor;
+use App\Services\PurchaseOrderService;
 use App\Services\PurchaseRequisitionService;
+use App\Support\Quantity;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Notifications\Notification;
-use Illuminate\Auth\Access\AuthorizationException;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Tombol alur persetujuan PR. Tombol hanya TAMPIL bila Policy mengizinkan, tetapi
- * pengamanan sebenarnya ada di PurchaseRequisitionService (yang memeriksa Policy lagi).
+ * Tombol alur Purchase Requisition. Tombol hanya TAMPIL bila Policy mengizinkan, tetapi
+ * pengamanan sebenarnya ada di service (yang memeriksa Policy lagi).
  *
  * Setiap method menerima callback opsional $onSuccess, dipakai halaman untuk
  * menyegarkan tampilan setelah status berubah.
@@ -96,39 +105,118 @@ class PurchaseRequisitionActions
             ));
     }
 
-    /** Menampilkan kesalahan validasi service sebagai notifikasi. */
-    public static function notifyValidation(ValidationException $exception): void
+    /**
+     * Purchasing mengubah PR yang disetujui menjadi PO: memilih vendor dan mengisi harga satuan
+     * setiap item. Setelah berhasil, pengguna dibawa ke halaman PO.
+     */
+    public static function createPurchaseOrder(): Action
     {
-        Notification::make()
-            ->danger()
-            ->title('Data tidak valid')
-            ->body(collect($exception->errors())->flatten()->implode(' '))
-            ->send();
+        return Action::make('createPurchaseOrder')
+            ->label('Buat PO')
+            ->icon('heroicon-o-shopping-cart')
+            ->color('primary')
+            ->modalHeading('Buat Purchase Order')
+            ->modalDescription('Pilih vendor dan isi harga satuan setiap item. PR akan berstatus "Menjadi PO".')
+            ->modalSubmitActionLabel('Buat PO')
+            ->fillForm(fn (PurchaseRequisition $record): array => [
+                'order_date' => now()->toDateString(),
+                'prices' => $record->items()->with('material')->get()->map(fn ($item): array => [
+                    'material_id' => $item->material_id,
+                    'material' => "{$item->material->code} - {$item->material->name}",
+                    'quantity' => Quantity::plain($item->quantity).' '.$item->material->base_uom,
+                    'unit_price' => null,
+                ])->all(),
+            ])
+            ->schema([
+                Select::make('vendor_id')
+                    ->label('Vendor')
+                    ->options(fn (): array => Vendor::query()
+                        ->where('is_active', true)
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->all())
+                    ->searchable()
+                    ->required(),
+                DatePicker::make('order_date')
+                    ->label('Tanggal PO')
+                    ->native(false)
+                    ->displayFormat('d M Y')
+                    ->required(),
+                Repeater::make('prices')
+                    ->label('Harga satuan per item')
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false)
+                    ->columns(3)
+                    ->schema([
+                        Hidden::make('material_id'),
+                        TextInput::make('material')
+                            ->label('Material')
+                            ->disabled()
+                            ->dehydrated(false),
+                        TextInput::make('quantity')
+                            ->label('Kuantitas')
+                            ->disabled()
+                            ->dehydrated(false),
+                        TextInput::make('unit_price')
+                            ->label('Harga satuan (Rp)')
+                            ->required()
+                            ->numeric()
+                            ->minValue(0)
+                            ->step('0.01'),
+                    ]),
+                Textarea::make('notes')
+                    ->label('Catatan')
+                    ->maxLength(1000)
+                    ->rows(2),
+            ])
+            ->visible(fn (PurchaseRequisition $record): bool => Gate::allows('convert', $record))
+            ->action(function (array $data, PurchaseRequisition $record, $livewire): void {
+                $prices = collect($data['prices'] ?? [])
+                    ->mapWithKeys(fn (array $row): array => [$row['material_id'] => $row['unit_price'] ?? null])
+                    ->all();
+
+                $order = null;
+
+                $created = self::run(function () use (&$order, $record, $data, $prices): void {
+                    $order = app(PurchaseOrderService::class)->createFromRequisition(
+                        $record,
+                        self::actor(),
+                        $data['vendor_id'] ?? null,
+                        $prices,
+                        ['order_date' => $data['order_date'] ?? null, 'notes' => $data['notes'] ?? null],
+                    );
+                }, 'Purchase Order berhasil dibuat');
+
+                if ($created && $order instanceof PurchaseOrder) {
+                    $livewire->redirect(PurchaseOrderResource::getUrl('view', ['record' => $order]));
+                }
+            });
     }
 
-    private static function run(Closure $operation, string $successTitle, ?Closure $onSuccess): void
+    /** Tautan ke PO yang dihasilkan dari PR ini (tampil bila PR sudah menjadi PO). */
+    public static function viewPurchaseOrder(): Action
     {
-        try {
-            $operation();
-        } catch (ValidationException $exception) {
-            self::notifyValidation($exception);
+        return Action::make('viewPurchaseOrder')
+            ->label('Lihat PO')
+            ->icon('heroicon-o-arrow-top-right-on-square')
+            ->color('gray')
+            ->visible(fn (PurchaseRequisition $record): bool => $record->purchaseOrder !== null
+                && Gate::allows('view', $record->purchaseOrder))
+            ->url(fn (PurchaseRequisition $record): ?string => $record->purchaseOrder
+                ? PurchaseOrderResource::getUrl('view', ['record' => $record->purchaseOrder])
+                : null);
+    }
 
-            return;
-        } catch (AuthorizationException) {
-            Notification::make()
-                ->danger()
-                ->title('Tindakan tidak diizinkan')
-                ->body('Anda tidak berwenang melakukan tindakan ini pada PR dengan status saat ini.')
-                ->send();
+    /** Dipertahankan agar halaman Create dan Edit tidak perlu diubah. */
+    public static function notifyValidation(ValidationException $exception): void
+    {
+        ServiceActionRunner::notifyValidation($exception);
+    }
 
-            return;
-        }
-
-        Notification::make()->success()->title($successTitle)->send();
-
-        if ($onSuccess) {
-            $onSuccess();
-        }
+    private static function run(Closure $operation, string $successTitle, ?Closure $onSuccess = null): bool
+    {
+        return ServiceActionRunner::run($operation, $successTitle, $onSuccess);
     }
 
     private static function actor(): User

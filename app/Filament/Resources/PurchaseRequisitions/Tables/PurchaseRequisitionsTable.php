@@ -53,6 +53,7 @@ class PurchaseRequisitionsTable
                 EditAction::make(),
                 PurchaseRequisitionActions::approve(),
                 PurchaseRequisitionActions::reject(),
+                PurchaseRequisitionActions::createPurchaseOrder(),
             ]);
     }
 }

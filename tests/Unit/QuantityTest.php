@@ -76,3 +76,12 @@ it('memformat nilai float dan null', function () {
     expect(Quantity::format(12.5, 3))->toBe('12,500')
         ->and(Quantity::format(null, 2))->toBe('0,00');
 });
+
+it('menampilkan kuantitas tanpa angka nol di belakang', function () {
+    expect(Quantity::plain('12.500'))->toBe('12.5')
+        ->and(Quantity::plain('10.000'))->toBe('10')
+        ->and(Quantity::plain('100'))->toBe('100')
+        ->and(Quantity::plain('0.000'))->toBe('0')
+        ->and(Quantity::plain(12.5))->toBe('12.5')
+        ->and(Quantity::plain(null))->toBe('0');
+});

@@ -31,6 +31,8 @@ class ViewPurchaseRequisition extends ViewRecord
             PurchaseRequisitionActions::approve($refresh),
             PurchaseRequisitionActions::reject($refresh),
             PurchaseRequisitionActions::reopen($refresh),
+            PurchaseRequisitionActions::createPurchaseOrder(),
+            PurchaseRequisitionActions::viewPurchaseOrder(),
         ];
     }
 }
